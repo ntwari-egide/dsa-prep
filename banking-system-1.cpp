@@ -40,10 +40,8 @@ bool is_empty_file(std::ifstream& pFile)
 bool check_account_existence(int account_number) {
 	ifstream account_file("account.txt", ios::in);
     Account account;
-    while (account_file >> account.account_id >> account.account_name >> account.bank_name >> account.account_number >> account.username) {
-       return account.acaccount_file >> account.account_id >> account.account_name >> account.bank_name >> account.account_number >> account.username) {
-       returnaccount_file >> account.account_id >> account.account_name >> account.bank_name >> account.account_number >> account.username) {
-       returncount_number == account_number ? true : false;
+    while (account_file >> account.account_id >> account.account_name >> account.bank_name >> account.account_number >> account.username) {       
+       return account.account_number == account_number ? true : false;
     }
     
     return false;
