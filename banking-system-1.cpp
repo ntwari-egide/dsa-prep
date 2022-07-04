@@ -22,6 +22,7 @@ int main () {
         cout << "7. Deposit" << endl;
         cout << "8. Withdraw " << endl;
         cout << "9. Transfer money " <<endl;
+        cout << "10. Sort by balance " <<endl;
         
         cin >> choice;
         
@@ -31,7 +32,10 @@ int main () {
                 save_account();
                 break;
             case 2:
-                read_account();
+                {
+                	vector<Account> accounts = read_account();
+                	reading_all_accounts(accounts);
+                }
                 break;
             case 3:
                 update_account();
@@ -55,6 +59,9 @@ int main () {
            		}
            		break;
    			case 9: transfer_money();
+           		
+                break;
+            case 10: sorting_accounts_by_input();
            		
                 break;
             default:

@@ -5,6 +5,8 @@
 #include <iostream>
 #include <stack>
 #include<math.h>
+#include<vector>
+#include<sstream>
 
 using namespace std;
 
@@ -34,16 +36,64 @@ class Deposit{
 
 };
 
+
+
+vector<Account> read_account() {
+    ifstream account_file("account.txt", ios::in);
+    
+    // create a vector accounts
+    
+    vector<Account> accounts;
+    
+    // create a line string to read each line from a file
+    string line;
+    
+    while(getline(account_file, line)) {
+        // create a string field to reach each part of the line, changing to the stringstream
+    	
+    	stringstream linestream(line);
+    	vector<string> fields;
+    	
+    	string field;
+    	
+    	while(getline(linestream,field,',')) {
+    		fields.push_back(field);
+    	}
+    	    	
+    	Account account;
+    	
+    	account.account_id = stoi(fields[0]);
+    	account.account_name = fields[1];
+    	account.bank_name = fields[2];
+    	account.account_number = stoi(fields[3]);
+    	account.username = fields[4];
+    	account.balance = stoi(fields[5]);
+    	
+    	accounts.push_back(account);
+    }
+    
+    // create a vector fields to store field, then read it to the account class
+    
+    account_file.close();
+    return accounts;
+}
+
+
 bool is_empty_file(std::ifstream& pFile)
 {
     return pFile.peek() == std::ifstream::traits_type::eof();
 }
 
 bool check_account_existence(int account_number) {
-	ifstream account_file("account.txt", ios::in);
-    Account account;
-    while (account_file >> account.account_id >> account.account_name >> account.bank_name >> account.account_number >> account.username) {       
-       return account.account_number == account_number ? true : false;
+    
+    vector<Account> accounts = read_account();
+    
+    for(int i = 0; i < accounts.size(); i++ ) {
+		Account account = accounts[i];
+		    
+       if(account.account_number == account_number ) {
+       		return true;
+       }
     }
     
     return false;
@@ -51,13 +101,37 @@ bool check_account_existence(int account_number) {
 
 bool check_if_account_has_balance(int account_number, int amount) {
 
-	ifstream account_file("account.txt", ios::in);
-    Account account;
-    while (account_file >> account.account_id >> account.account_name >> account.bank_name >> account.account_number >> account.username) {       
-       return account.account_number > amount && account.account_number == account_number ? true : false;
+	
+	vector<Account> accounts = read_account();
+    
+    for(int i = 0; i < accounts.size(); i++ ) {
+		Account account = accounts[i];
+		
+       if(account.account_number > amount) {
+       	if(account.account_number == account_number) {
+       		return true;
+       	}
+       }
     }
     
     return false;
+}
+
+void update_file_from_vector(vector<Account> accounts) {
+    ofstream account_file("temp-account.txt", ios::out | ios::app);
+
+    for (int i = 0; i < accounts.size(); i++)
+    {
+        Account account = accounts[i];
+
+        account_file << account.account_id << "," << account.account_name <<  ","<< account.bank_name <<  "," << account.account_number <<  "," << account.username <<  "," << account.balance<< endl;
+    }
+
+    account_file.close();
+
+    remove("account.txt");
+    rename("temp-account.txt","account.txt");
+    
 }
 
 int generate_account_number() {
@@ -71,18 +145,10 @@ int generate_account_number() {
 
 
 int get_latest_id() {
-    ifstream account_file("account.txt", ios::in);
-    Account account;
-    stack<int> accountIds;
-
-    if (is_empty_file(account_file)) {
-        return 0;
-    }
-
-    while (account_file >> account.account_id >> account.account_name >> account.bank_name >> account.account_number >> account.username) {
-        accountIds.push(account.account_id);
-    }
-    return accountIds.top() + 1;
+    
+    vector<Account> accounts = read_account();
+    
+    return accounts.back().account_id ;
 }
 
 void save_account() {
@@ -101,70 +167,63 @@ void save_account() {
     account.account_number = generate_account_number();
     account.balance = 0;
     
-    account_file << account.account_id << " " << account.account_name << " " << account.bank_name << " " << account.account_number << " " << account.username << " " << account.balance<< endl;
+    account_file << account.account_id << "," << account.account_name <<  ","<< account.bank_name <<  "," << account.account_number <<  "," << account.username <<  "," << account.balance<< endl;
     account_file.close();
 }
-void read_account() {
-    ifstream account_file("account.txt", ios::in);
-    Account account;
-    while (account_file >> account.account_id >> account.account_name >> account.bank_name >> account.account_number >> account.username >> account.balance) {
-        cout << account.account_id << " " << account.account_name << " " << account.bank_name << " " << account.account_number << " " << account.username << " " << account.balance <<endl;
-    }
-}
 
+void reading_all_accounts (vector<Account> accounts) {
+	
+	for(int i = 0; i < accounts.size(); i++ ) {
+		Account account = accounts[i];
+		
+		cout << account.account_id << " " << account.account_name << " " << account.bank_name << " " << account.account_number << " " << account.username << " " << account.balance <<endl;
+
+	}
+
+}
 
 int increase_balance(int account_number, int amount) {
 	
-	ifstream account_file("account.txt", ios::in);
-	ofstream tem_account_file("temp-account.txt", ios::out | ios::app);
-	
-	Account account;
-	
 	int new_balance = 0;
-	
-	while( account_file >> account.account_id >> account.account_name >> account.bank_name >> account.account_number >> account.username >> account.balance ) {
-	
-		if(account.account_number == account_number) {
-			account.balance += amount;
-			new_balance = account.balance;
-		}
-		
-		tem_account_file << account.account_id<<" " << account.account_name <<" " << account.bank_name<<" " <<  account.account_number<<" " << account.username<<" " << account.balance<< endl;
-	}
-	
-	tem_account_file.close();
-	account_file.close();
-	
-	remove("account.txt");
-	rename("temp-account.txt","account.txt");
+
+    vector<Account> accounts = read_account();
+
+    for (int i = 0; i < accounts.size(); i++)
+    {
+        Account account = accounts[i];
+
+        if( account.account_number == account_number ) {
+
+            accounts[i].balance += amount;
+            new_balance = accounts[i].balance;
+        }
+        
+    }
+    
+    update_file_from_vector(accounts);
 
 	return new_balance;
 }
 
 int decrease_balance(int account_number, int amount) {
 	
-	ifstream account_file("account.txt", ios::in);
-	ofstream tem_account_file("temp-account.txt", ios::out | ios::app);
-	
-	Account account;
-	
 	int new_balance = 0;
-	
-	while( account_file >> account.account_id >> account.account_name >> account.bank_name >> account.account_number >> account.username >> account.balance ) {
-	
-		if(account.account_number == account_number) {
-			account.balance -= amount;
-			new_balance = account.balance;
-		}
-		
-		tem_account_file << account.account_id<<" " << account.account_name <<" " << account.bank_name<<" " <<  account.account_number<<" " << account.username<<" " << account.balance<< endl;
-	}
-	
-	tem_account_file.close();
-	account_file.close();
-	
-	remove("account.txt");
-	rename("temp-account.txt","account.txt");
+
+    vector<Account> accounts = read_account();
+
+    for (int i = 0; i < accounts.size(); i++)
+    {
+        Account account = accounts[i];
+
+        if( account.account_number == account_number ) {
+
+            accounts[i].balance -= amount;
+            new_balance = accounts[i].balance;
+        }
+        
+    }
+    
+    update_file_from_vector(accounts);
 
 	return new_balance;
 }
@@ -173,34 +232,20 @@ int deposit_to_account(){
 	int account_number, amount;
     cout << "Enter account number : " << endl;
     cin >> account_number;
-    cout << "Enter amount to deposit : " << endl;
-    cin >> amount;
-
-    int total_balance = 0;
 
     if (!check_account_existence(account_number)) {
         cout << "Sorry, your account is not found" << endl;
         deposit_to_account();    
     }
     
-    ifstream account_file("account.txt", ios::in);
-    ofstream temp_file("temp.txt", ios::out | ios::app);
+    cout << "Enter amount to deposit : " << endl;
+    cin >> amount;
+    
+    int new_balance = increase_balance(account_number, amount);
 
-    Account account;
+    cout<<"Deposited: "<<amount<<", "<<new_balance<<endl;
 
-    while (account_file >> account.account_id >> account.account_name >> account.bank_name >> account.account_number >> account.username >> account.balance) {
-        if (account.account_number == account_number) {
-            total_balance = account.balance += amount;
-            temp_file << account.account_id << " " << account.account_name << " " << account.bank_name << " " << account.account_number << " " << account.username << " " << account.balance << endl;
-        } else {
-            temp_file << account.account_id << " " << account.account_name << " " << account.bank_name << " " << account.account_number << " " << account.username << " " << account.balance << endl;
-        }
-    }
-    remove("account.txt");
-    rename("temp.txt", "account.txt");
-    account_file.close();
-    temp_file.close();
-    return total_balance;
+    return new_balance;
 }
 
 
@@ -211,8 +256,6 @@ int withdraw_from_account(){
     cout << "Enter account number : " << endl;
     cin >> account_number;
 
-    int total_balance = 0;
-
     if (!check_account_existence(account_number)) {	
         cout << "Sorry, your account is not found" << endl;
         withdraw_from_account();    
@@ -220,6 +263,14 @@ int withdraw_from_account(){
     
     cout << "Enter amount to withdraw : " << endl;
     cin >> amount;
+
+     if (!check_if_account_has_balance(account_number, amount)) {	
+        cout << "Sorry, You don't have enough balance to withdraw!" << endl;
+        withdraw_from_account();    
+    }
+
+    int total_balance = 0;
+
     
     if ( amount < 0) {
         cout << "Sorry, you can't withdraw money below zero" << endl;
@@ -230,97 +281,78 @@ int withdraw_from_account(){
     	withdraw_from_account(); 
     }
     
-    ifstream account_file("account.txt", ios::in);
-    ofstream temp_file("temp.txt", ios::out | ios::app);
-
-    Account account;
-
-    while (account_file >> account.account_id >> account.account_name >> account.bank_name >> account.account_number >> account.username >> account.balance) {
-        if (account.account_number == account_number) {
-            total_balance = account.balance -= amount;
-                // charging the discount
+	if( amount > 10000  && amount < 50000 ) amount += amount * 0.02;
+	else if( amount <= 100000 ) amount += amount * 0.02;
+				
+    return decrease_balance(account_number, amount);
     
-			if( amount > 10000  && amount < 50000 ) account.balance -= total_balance * 0.02;
-			else if( amount <= 100000 ) account.balance -= total_balance * 0.03;
-				
-			total_balance = account.balance;
-				
-            temp_file << account.account_id << " " << account.account_name << " " << account.bank_name << " " << account.account_number << " " << account.username << " " << account.balance << endl;
-        } else {
-            temp_file << account.account_id << " " << account.account_name << " " << account.bank_name << " " << account.account_number << " " << account.username << " " << account.balance << endl;
-        }
-    }
-    remove("account.txt");
-    rename("temp.txt", "account.txt");
-    account_file.close();
-    temp_file.close();
-
-    return total_balance;
 }
 	
 void update_account() {
-    ifstream account_file("account.txt", ios::in);
-    ofstream temp_file("temp.txt", ios::out | ios::app);
 
     Account account;
 
-    int account_id;
+    int account_number;
 
-    cout << "Enter account id: ";
-    cin >> account_id;
+    enter_sender:
+    cout << "Enter account number: ";
+    cin >> account_number;
+    
+    if (!check_account_existence(account_number)) {
+        cout << "Sorry, senders account is not found" << endl;
+        goto enter_sender;  
+    }
 
-    int count = 0;
+    vector<Account> accounts = read_account();
 
-    while(account_file >> account.account_id >> account.account_name >> account.bank_name >> account.account_number >> account.username>> account.balance ) {
-        if (account.account_id == account_id) {
+    for (int i = 0; i < accounts.size(); i++)
+    {
+        Account account = accounts[i];
+
+        if( account.account_number == account_number ) {
+
             cout << "Update account name: ";
-            cin >> account.account_name;
+            cin >> accounts[i].account_name;
             cout << "Update bank name: ";
-            cin >> account.bank_name;
-            cout << "Update account number: ";
-            cin >> account.
+            cin >> accounts[i].bank_name;
             
-            account_number;
             cout << "Update username: ";
-            cin >> account.username;
-            temp_file << account.account_id << " " << account.account_name << " " << account.bank_name << " " << account.account_number << " " << account.username <<account.balance << endl;
-            count ++;
-        } else {
-            temp_file << account.account_id << " " << account.account_name << " " << account.bank_name << " " << account.account_number << " " << account.username  <<account.balance << endl;
-        }
-    }
-    if (count == 0) {
-        cout << "Sorry, account not found" << endl;
-    }
-    remove("account.txt");
-    rename("temp.txt", "account.txt");
+            cin >> accounts[i].username;
 
-    account_file.close();
-    temp_file.close();
+        }
+        
+    }
+    
+    update_file_from_vector(accounts);
 }
 
 void delete_account() {
-    ifstream account_file("account.txt", ios::in);
-    ofstream temp_file("temp.txt", ios::out | ios::app);
-
+    
     Account account;
 
-    int account_id;
-    cout << "Enter account id: ";
+    int account_number;
 
-    cin >> account_id;
-    int count = 0;
+    enter_sender:
+    cout << "Enter account number: ";
+    cin >> account_number;
     
-     while (account_file >> account.account_id >> account.account_name >> account.bank_name >> account.account_number >> account.username) {
-        if (account.account_id != account_id) count ++;
-        else {
-            temp_file << account.account_id << " " << account.account_name << " " << account.bank_name << " " << account.account_number << " " << account.username  <<account.balance << endl;
-        }
-     }
-    remove("account.txt");
-    rename("temp.txt", "account.txt");
-    account_file.close();
-    temp_file.close();
+    if (!check_account_existence(account_number)) {
+        cout << "Sorry, senders account is not found" << endl;
+        goto enter_sender;  
+    }
+
+    vector<Account> accounts = read_account();
+
+    for (int i = 0; i < accounts.size(); i++)
+    {
+        Account account = accounts[i];
+
+        if( account.account_number == account_number ) accounts.erase(accounts.begin() + i);
+        
+    }
+    
+    update_file_from_vector(accounts);
+
 }
 
 // transfer money
@@ -330,29 +362,33 @@ void transfer_money(){
 	// checking if the senders and recievers account exists
 	int senders_account_number, recievers_account_number, amount;
 	
+	enter_sender:
 	cout<<"Enter senders account number: \n";
 	cin>>senders_account_number;
 	
 	if (!check_account_existence(senders_account_number)) {
         cout << "Sorry, senders account is not found" << endl;
-        transfer_money();  
+        goto enter_sender;  
     }
 	
+	enter_reciever:
 	cout<<"Enter recievers account number: \n";
 	cin>>recievers_account_number;
 	
 	if (!check_account_existence(recievers_account_number)) {
         cout << "Sorry, recievers account is not found" << endl;
-        transfer_money(); 
+        goto enter_reciever;
     }
 	
 	cout <<"Enter amount to transfer: \n";
+	cin.ignore();
 	cin>>amount;
 		
 	// check if the amount to send is equivalent
 	if(! check_if_account_has_balance(senders_account_number, amount)){
-		cout<<"Your balance is not enought \n";
-		transfer_money();
+		cout<<"Your balance is not enough \n";
+		cin.ignore();
+		goto enter_reciever;
 	}
 	// Reducing the balance of sender
 	int remaining_amount= decrease_balance(senders_account_number, amount);
@@ -367,6 +403,32 @@ void transfer_money(){
 // sorting balance
 
 
+void sorting_accounts_by_input()
+{
+    vector<Account> accounts = read_account();
+
+    for (int step = 0; step < (accounts.size() -1); ++step) {
+      
+    int swapped = 0;
+    
+    for (int i = 0; i < (accounts.size() -step-1); ++i) {
+        
+      if (accounts[i].balance < accounts[i + 1].balance) {
+
+        Account temp = accounts[i];
+        accounts[i] = accounts[i + 1];
+        accounts[i + 1] = temp;
+        
+        swapped = 1;
+      }
+    }
+    if (swapped == 0)
+      break;
+  }
+
+    reading_all_accounts(accounts);
+  
+}
 
 
 
