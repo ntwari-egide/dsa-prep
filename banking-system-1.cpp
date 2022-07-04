@@ -21,6 +21,8 @@ int main () {
         cout << "6. Get latest id" << endl;
         cout << "7. Deposit" << endl;
         cout << "8. Withdraw " << endl;
+        cout << "9. Transfer money " <<endl;
+        
         cin >> choice;
         
         
@@ -51,6 +53,8 @@ int main () {
            		int new_balance = withdraw_from_account();
            		cout<<"Your new balance: " <<new_balance<<endl;
            		}
+           		break;
+   			case 9: transfer_money();
            		
                 break;
             default:

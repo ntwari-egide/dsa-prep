@@ -49,6 +49,17 @@ bool check_account_existence(int account_number) {
     return false;
 }
 
+bool check_if_account_has_balance(int account_number, int amount) {
+
+	ifstream account_file("account.txt", ios::in);
+    Account account;
+    while (account_file >> account.account_id >> account.account_name >> account.bank_name >> account.account_number >> account.username) {       
+       return account.account_number > amount && account.account_number == account_number ? true : false;
+    }
+    
+    return false;
+}
+
 int generate_account_number() {
 	start:
 	int number = rand() % 900000 + 100000;
@@ -99,6 +110,63 @@ void read_account() {
     while (account_file >> account.account_id >> account.account_name >> account.bank_name >> account.account_number >> account.username >> account.balance) {
         cout << account.account_id << " " << account.account_name << " " << account.bank_name << " " << account.account_number << " " << account.username << " " << account.balance <<endl;
     }
+}
+
+
+int increase_balance(int account_number, int amount) {
+	
+	ifstream account_file("account.txt", ios::in);
+	ofstream tem_account_file("temp-account.txt", ios::out | ios::app);
+	
+	Account account;
+	
+	int new_balance = 0;
+	
+	while( account_file >> account.account_id >> account.account_name >> account.bank_name >> account.account_number >> account.username >> account.balance ) {
+	
+		if(account.account_number == account_number) {
+			account.balance += amount;
+			new_balance = account.balance;
+		}
+		
+		tem_account_file << account.account_id<<" " << account.account_name <<" " << account.bank_name<<" " <<  account.account_number<<" " << account.username<<" " << account.balance<< endl;
+	}
+	
+	tem_account_file.close();
+	account_file.close();
+	
+	remove("account.txt");
+	rename("temp-account.txt","account.txt");
+
+	return new_balance;
+}
+
+int decrease_balance(int account_number, int amount) {
+	
+	ifstream account_file("account.txt", ios::in);
+	ofstream tem_account_file("temp-account.txt", ios::out | ios::app);
+	
+	Account account;
+	
+	int new_balance = 0;
+	
+	while( account_file >> account.account_id >> account.account_name >> account.bank_name >> account.account_number >> account.username >> account.balance ) {
+	
+		if(account.account_number == account_number) {
+			account.balance -= amount;
+			new_balance = account.balance;
+		}
+		
+		tem_account_file << account.account_id<<" " << account.account_name <<" " << account.bank_name<<" " <<  account.account_number<<" " << account.username<<" " << account.balance<< endl;
+	}
+	
+	tem_account_file.close();
+	account_file.close();
+	
+	remove("account.txt");
+	rename("temp-account.txt","account.txt");
+
+	return new_balance;
 }
 
 int deposit_to_account(){
@@ -170,6 +238,13 @@ int withdraw_from_account(){
     while (account_file >> account.account_id >> account.account_name >> account.bank_name >> account.account_number >> account.username >> account.balance) {
         if (account.account_number == account_number) {
             total_balance = account.balance -= amount;
+                // charging the discount
+    
+			if( amount > 10000  && amount < 50000 ) account.balance -= total_balance * 0.02;
+			else if( amount <= 100000 ) account.balance -= total_balance * 0.03;
+				
+			total_balance = account.balance;
+				
             temp_file << account.account_id << " " << account.account_name << " " << account.bank_name << " " << account.account_number << " " << account.username << " " << account.balance << endl;
         } else {
             temp_file << account.account_id << " " << account.account_name << " " << account.bank_name << " " << account.account_number << " " << account.username << " " << account.balance << endl;
@@ -179,14 +254,10 @@ int withdraw_from_account(){
     rename("temp.txt", "account.txt");
     account_file.close();
     temp_file.close();
-    // charging the discount
-    
-    if( amount > 10000  && amount < 50000 ) total_balance -= total_balance * 0.02;
-    else if( amount <= 100000 ) total_balance -= total_balance * 0.03;
-    
+
     return total_balance;
 }
-
+	
 void update_account() {
     ifstream account_file("account.txt", ios::in);
     ofstream temp_file("temp.txt", ios::out | ios::app);
@@ -251,3 +322,51 @@ void delete_account() {
     account_file.close();
     temp_file.close();
 }
+
+// transfer money
+
+void transfer_money(){
+
+	// checking if the senders and recievers account exists
+	int senders_account_number, recievers_account_number, amount;
+	
+	cout<<"Enter senders account number: \n";
+	cin>>senders_account_number;
+	
+	if (!check_account_existence(senders_account_number)) {
+        cout << "Sorry, senders account is not found" << endl;
+        transfer_money();  
+    }
+	
+	cout<<"Enter recievers account number: \n";
+	cin>>recievers_account_number;
+	
+	if (!check_account_existence(recievers_account_number)) {
+        cout << "Sorry, recievers account is not found" << endl;
+        transfer_money(); 
+    }
+	
+	cout <<"Enter amount to transfer: \n";
+	cin>>amount;
+		
+	// check if the amount to send is equivalent
+	if(! check_if_account_has_balance(senders_account_number, amount)){
+		cout<<"Your balance is not enought \n";
+		transfer_money();
+	}
+	// Reducing the balance of sender
+	int remaining_amount= decrease_balance(senders_account_number, amount);
+	
+	// Increasing the balance of reciever
+	increase_balance(recievers_account_number, amount);
+	
+	cout<<"You have sent "<<amount<<", remaing with "<<remaining_amount<<" rwf \n";
+	
+}
+
+// sorting balance
+
+
+
+
+

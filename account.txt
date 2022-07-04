@@ -1,3 +1,2 @@
-1 ntwari bk 789383 egide 1400
-2 mugisha bk 130886 jules 0
-3 gervais bk 130886 gervs 0
+1 ntwari bk 789383 egide 5000
+2 mugisha bk 130886 jules 501900
